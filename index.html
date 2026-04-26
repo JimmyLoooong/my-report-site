@@ -1,0 +1,1212 @@
+﻿import React, { useState } from 'react';
+import { 
+  TrendingUp, 
+  Cpu, 
+  Layers, 
+  AlertTriangle, 
+  Zap, 
+  Database, 
+  CheckCircle,
+  BarChart3,
+  Microscope,
+  Activity,
+  Calendar,
+  PieChart,
+  ArrowRight,
+  ArrowDown,
+  Target,
+  Scale,
+  TrendingDown,
+  Shield,
+  ZapOff,
+  BatteryCharging
+} from 'lucide-react';
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('financials');
+
+  // ==========================================
+  // 📊 資料設定區 (Data Configurations)
+  // 您可以在此處統一驗證、修改與更新所有財務與營運數據
+  // ==========================================
+
+  // 1. 年度財務數據 (用於繪製雙軸柱狀折線圖)
+  const yearlyFinancials = [
+    { year: '2024', revenue: 41.7, margin: 45.1, eps: 7.25, status: '實際' },
+    { year: '2025', revenue: 56.4, margin: 48.7, eps: 7.74, status: '估' },
+    { year: '2026(E)', revenue: 99.0, margin: 50.1, eps: 17.38, status: '法人共識' },
+    { year: '2027(E)', revenue: 135.0, margin: 52.0, eps: 30.08, status: '樂觀預估' },
+  ];
+
+  // 2. 季度營運動能追蹤數據 
+  const quarterlyMomentum = [
+    {
+      id: '2025Q4',
+      badge: '2025 Q4 (已實現)',
+      topLabel: null,
+      yoy: '+52%',
+      qoq: '+25%',
+      marginLabel: '毛利率',
+      marginValue: '49.9%',
+      description: 'S-SiCap 佔比達 30%，VHM NRE 認列。',
+      progressWidth: '60%',
+      // 樣式設定
+      styles: {
+        wrapper: 'bg-white border border-slate-200 shadow-sm',
+        badgeBg: 'bg-slate-100 text-slate-600',
+        yoyText: 'text-slate-800',
+        qoqText: 'text-emerald-600',
+        barBg: 'bg-slate-100',
+        barFill: 'bg-slate-400',
+        marginText: 'text-orange-500'
+      }
+    },
+    {
+      id: '2026Q1',
+      badge: '2026 Q1 (自結新高)',
+      topLabel: '當前爆發點',
+      yoy: '+116%',
+      qoq: '+12.5%',
+      marginLabel: '毛利率 (優於預期)',
+      marginValue: '49~50%',
+      description: '3月單月營收 8.15 億創歷史新高。IPC 多案量產、ApSRAM 開始貢獻。',
+      progressWidth: '85%',
+      styles: {
+        wrapper: 'bg-white border-2 border-blue-200 shadow-md transform scale-105 z-10',
+        badgeBg: 'bg-blue-100 text-blue-800',
+        yoyText: 'text-blue-700',
+        qoqText: 'text-emerald-600',
+        barBg: 'bg-slate-100',
+        barFill: 'bg-blue-500',
+        marginText: 'text-orange-500'
+      }
+    },
+    {
+      id: '2026Q2',
+      badge: '2026 Q2 (法人預估)',
+      topLabel: null,
+      yoy: '+78%',
+      qoq: '+13%',
+      marginLabel: '毛利率突破點',
+      marginValue: '51.0%',
+      description: '測試產能瓶頸解除，IPD 開始放量拉高整體規模經濟與獲利。',
+      progressWidth: '100%',
+      styles: {
+        wrapper: 'bg-gradient-to-br from-emerald-50 to-white border border-emerald-200 shadow-sm',
+        badgeBg: 'bg-emerald-100 text-emerald-800',
+        yoyText: 'text-emerald-700',
+        qoqText: 'text-emerald-600',
+        barBg: 'bg-slate-100',
+        barFill: 'bg-emerald-500',
+        marginText: 'text-orange-600 text-lg'
+      }
+    }
+  ];
+
+  // 3. 法人估值情境數據
+  const valuationScenarios = [
+    {
+      type: 'Bull',
+      badge: '樂觀 (本土A14)',
+      title: '2027 上看 30.08 元',
+      subtitle: '2026 EPS: 20.26 元',
+      bullets: [
+        '最新調升：4/23 大幅上調目標，反映 2027 年 VHM 潛在 NRE 貢獻。',
+        '估值轉換：若以 2027 年獲利為基準，目前 P/E 僅約 26.2 倍。'
+      ],
+      styles: {
+        wrapper: 'bg-gradient-to-b from-emerald-50 to-white border border-emerald-200 relative overflow-hidden',
+        badgeBg: 'bg-emerald-500',
+        titleText: 'text-emerald-700',
+        iconColor: 'text-emerald-500'
+      }
+    },
+    {
+      type: 'Base',
+      badge: '市場共識 (Base)',
+      title: '2026 共識 17.38 元',
+      subtitle: 'YoY: +124.48%',
+      bullets: [
+        '平均預估：多家外資與本土法人平均共識 (包含年初調升潮)。',
+        '本益比評價：依 2026 EPS 計算，目前 P/E 落於 45.35 倍。'
+      ],
+      styles: {
+        wrapper: 'bg-gradient-to-b from-blue-50 to-white border-2 border-blue-400 relative transform md:-translate-y-2 shadow-md',
+        badgeBg: 'bg-blue-500',
+        titleText: 'text-blue-700',
+        iconColor: 'text-blue-500'
+      }
+    },
+    {
+      type: 'Bear',
+      badge: '保守 (本土A09)',
+      title: '2026 下看 14.49 元',
+      subtitle: '較共識低 16%',
+      bullets: [
+        '產能隱憂：4/13 出具報告，可能反映後段測試產能瓶頸或 IPD 遞延疑慮。',
+        '獲利保底：即使在保守情境下，EPS 仍較 2025 年呈現近翻倍成長。'
+      ],
+      styles: {
+        wrapper: 'bg-gradient-to-b from-rose-50 to-white border border-rose-200 relative overflow-hidden',
+        badgeBg: 'bg-rose-500',
+        titleText: 'text-rose-700',
+        iconColor: 'text-rose-500'
+      }
+    }
+  ];
+
+  // 繪圖常數設定
+  const maxRev = 150;
+  const minMargin = 40;
+  const maxMargin = 55;
+  // ==========================================
+  
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-12">
+      {/* Header Section */}
+      <header className="bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 text-white p-6 md:p-10 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500 opacity-10 rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3"></div>
+        <div className="max-w-6xl mx-auto relative z-10">
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-bold tracking-wider shadow-sm">TWSE: 6531</span>
+            <span className="bg-indigo-500/30 border border-indigo-400/50 text-indigo-100 px-3 py-1 rounded-full text-sm font-medium">AI 先進封裝元件</span>
+            <span className="bg-emerald-500/30 border border-emerald-400/50 text-emerald-100 px-3 py-1 rounded-full text-sm font-medium">客製化記憶體</span>
+          </div>
+          <h1 className="text-3xl md:text-5xl font-extrabold mb-4 tracking-tight">愛普科技 (AP Memory)</h1>
+          <p className="text-lg text-blue-100 max-w-3xl leading-relaxed">
+            從物聯網記憶體走向高效能運算 (HPC) 的結構性轉型拐點。憑藉 <strong className="text-white">S-SiCap 矽電容</strong> 與 <strong className="text-white">VHM 垂直高頻寬記憶體</strong> 兩大核心武器，精準卡位台積電 CoWoS 生態系與次世代 AI 基礎設施。
+          </p>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto p-4 md:p-8 -mt-8 relative z-20">
+        
+        {/* 最新亮點 Highlight Banner */}
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-5 mb-8 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="bg-amber-500 text-white p-2 rounded-lg mt-1 md:mt-0 shadow-sm">
+              <Zap className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-amber-900 font-bold text-lg">2026 近期關鍵催化劑 (Catalysts)</h3>
+              <p className="text-amber-800 text-sm mt-1">
+                <strong>Q1 財報驚艷：</strong>合併營收達 21.01 億元 (YoY +116%)，創歷史新高，淡季不淡。 <br className="hidden md:block"/>
+                <strong>法人全面上修：</strong>本土A14機構於 4/23 大幅上修 2027 年 EPS 預估至 30.08 元，確認長線成長爆發力。
+              </p>
+            </div>
+          </div>
+          <button className="text-sm font-bold bg-amber-100 text-amber-700 px-4 py-2 rounded-lg hover:bg-amber-200 transition-colors whitespace-nowrap">
+            查看法人上修報告
+          </button>
+        </div>
+
+        {/* 核心 KPI Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 border-l-4 border-l-blue-500">
+            <p className="text-xs text-slate-500 font-semibold mb-1 uppercase tracking-wider">2026(E) 共識 EPS</p>
+            <h3 className="text-2xl font-bold text-slate-800">17.38 <span className="text-sm font-normal text-slate-500">元</span></h3>
+            <p className="mt-2 text-sm text-emerald-600 font-semibold flex items-center gap-1">
+              <TrendingUp className="w-4 h-4" /> YoY +124.5%
+            </p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 border-l-4 border-l-indigo-500">
+            <p className="text-xs text-slate-500 font-semibold mb-1 uppercase tracking-wider">2027(E) 最高 EPS</p>
+            <h3 className="text-2xl font-bold text-slate-800">30.08 <span className="text-sm font-normal text-slate-500">元</span></h3>
+            <p className="mt-2 text-sm text-emerald-600 font-semibold flex items-center gap-1">
+              <TrendingUp className="w-4 h-4" /> YoY +73.1%
+            </p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 border-l-4 border-l-emerald-500">
+            <p className="text-xs text-slate-500 font-semibold mb-1 uppercase tracking-wider">2026 預估本益比</p>
+            <h3 className="text-2xl font-bold text-slate-800">45.3 <span className="text-sm font-normal text-slate-500">x</span></h3>
+            <p className="mt-2 text-sm text-slate-600 flex items-center gap-1">
+               2027 降至 26.2x
+            </p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 border-l-4 border-l-purple-500">
+            <p className="text-xs text-slate-500 font-semibold mb-1 uppercase tracking-wider">營收結構反轉</p>
+            <h3 className="text-2xl font-bold text-slate-800">&gt; 35 <span className="text-sm font-normal text-slate-500">%</span></h3>
+            <p className="mt-2 text-sm text-purple-600 font-semibold flex items-center gap-1">
+              <PieChart className="w-4 h-4" /> S-SiCap 佔比
+            </p>
+          </div>
+        </div>
+
+        {/* Content Tabs */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-10">
+          <div className="relative border-b border-slate-200 bg-slate-50/50">
+            <div className="flex overflow-x-auto scrollbar-hide">
+              {[
+                { id: 'financials', label: '財務與營運分析', icon: <BarChart3 className="w-4 h-4 md:w-5 md:h-5" /> },
+                { id: 'overview', label: '核心技術與進程', icon: <Microscope className="w-4 h-4 md:w-5 md:h-5" /> },
+                { id: 'valuation', label: '估值與情境分析', icon: <Scale className="w-4 h-4 md:w-5 md:h-5" /> },
+                { id: 'risks', label: '投資風險評估', icon: <AlertTriangle className="w-4 h-4 md:w-5 md:h-5" /> }
+              ].map(tab => (
+                <button 
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-4 py-3 md:px-6 md:py-4 font-bold text-xs md:text-sm whitespace-nowrap transition-colors flex items-center gap-1.5 md:gap-2 ${activeTab === tab.id ? 'text-blue-700 border-b-[3px] border-blue-600 bg-white' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  {tab.icon} {tab.label}
+                </button>
+              ))}
+            </div>
+            {/* 手機版滑動提示漸層遮罩 */}
+            <div className="absolute top-0 right-0 bottom-0 w-12 bg-gradient-to-l from-slate-100/90 to-transparent pointer-events-none md:hidden"></div>
+          </div>
+          {/* 手機版專屬文字滑動提示 */}
+          <div className="bg-slate-50 text-[10px] text-slate-400 text-center py-1.5 border-b border-slate-100 md:hidden flex items-center justify-center gap-1.5 shadow-inner">
+            <ArrowRight className="w-3 h-3" /> 左右滑動以切換更多分析分頁 <ArrowRight className="w-3 h-3" />
+          </div>
+
+          <div className="p-6 md:p-8">
+            {/* Tab: Financials */}
+            {activeTab === 'financials' && (
+              <div className="space-y-8 animate-in fade-in duration-500">
+                <div className="flex flex-col gap-8">
+                  
+                  {/* Top Section: Composite Chart (Full Width) */}
+                  <div className="w-full bg-white border border-slate-100 rounded-xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+                      <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-blue-500 shrink-0" />
+                        <span>年度營收、獲利與毛利率趨勢</span>
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-500">
+                        <div className="flex items-center gap-1"><div className="w-3 h-3 bg-blue-400 rounded-sm"></div>營收(億)</div>
+                        <div className="flex items-center gap-1"><div className="w-3 h-3 bg-indigo-900 rounded-full"></div>EPS(元)</div>
+                        <div className="flex items-center gap-1"><div className="w-3 h-0.5 bg-orange-500"></div>毛利率(%)</div>
+                      </div>
+                    </div>
+                    
+                    {/* Custom SVG Dual-Axis Chart */}
+                    <div className="relative h-72 w-full mt-4">
+                      {/* Y-Axis Labels (Left - Revenue) */}
+                      <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-xs text-slate-400 pb-8 z-10 bg-white/80 pr-2">
+                        <span>{maxRev}</span>
+                        <span>{maxRev * 0.75}</span>
+                        <span>{maxRev * 0.5}</span>
+                        <span>{maxRev * 0.25}</span>
+                        <span>0</span>
+                      </div>
+                      
+                      {/* Y-Axis Labels (Right - Margin) */}
+                      <div className="absolute right-0 top-0 h-full flex flex-col justify-between text-xs text-orange-400 pb-8 z-10 bg-white/80 pl-2 text-right">
+                        <span>{maxMargin}%</span>
+                        <span>{(minMargin + (maxMargin-minMargin)*0.75).toFixed(1)}%</span>
+                        <span>{(minMargin + (maxMargin-minMargin)*0.5).toFixed(1)}%</span>
+                        <span>{(minMargin + (maxMargin-minMargin)*0.25).toFixed(1)}%</span>
+                        <span>{minMargin}%</span>
+                      </div>
+
+                      {/* SVG Chart Area */}
+                      <div className="absolute inset-0 pl-8 pr-10 pb-8">
+                        {/* Grid lines */}
+                        <div className="w-full h-full flex flex-col justify-between absolute top-0 left-8 right-10 z-0">
+                          <div className="border-b border-slate-100 w-full h-0"></div>
+                          <div className="border-b border-slate-100 w-full h-0"></div>
+                          <div className="border-b border-slate-100 w-full h-0"></div>
+                          <div className="border-b border-slate-100 w-full h-0"></div>
+                          <div className="border-b border-slate-200 w-full h-0"></div>
+                        </div>
+
+                        <div className="w-full h-full flex items-end justify-around relative z-10">
+                          {yearlyFinancials.map((data, idx) => {
+                            const revHeight = (data.revenue / maxRev) * 100;
+                            const epsHeight = (data.eps / 35) * 100; // max eps scale 35
+                            
+                            return (
+                              <div key={idx} className="flex flex-col items-center justify-end h-full w-full group relative">
+                                {/* Hover Tooltip */}
+                                <div className="absolute -top-12 bg-slate-800 text-white text-xs p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none whitespace-nowrap">
+                                  營收: {data.revenue} 億 | EPS: {data.eps} | 毛利: {data.margin}%
+                                </div>
+                                
+                                <div className="flex items-end gap-1 md:gap-2 h-full w-full justify-center pb-[1px]">
+                                  {/* Revenue Bar */}
+                                  <div 
+                                    className={`w-6 md:w-12 rounded-t-sm transition-all duration-1000 flex items-start justify-center pt-2 relative
+                                      ${idx >= 2 ? 'bg-blue-500' : 'bg-blue-300'}`}
+                                    style={{ height: `${revHeight}%` }}
+                                  >
+                                    <span className="text-white font-bold text-[10px] md:text-xs absolute -top-5 text-blue-600">{data.revenue}</span>
+                                  </div>
+                                  
+                                  {/* EPS Bar */}
+                                  <div 
+                                    className="w-3 md:w-6 bg-indigo-900 rounded-t-sm transition-all duration-1000 relative"
+                                    style={{ height: `${epsHeight}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        
+                        {/* SVG Line Overlay for Margin */}
+                        <svg className="absolute inset-0 h-full w-full pointer-events-none z-20 overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
+                          <polyline 
+                            fill="none" 
+                            stroke="#f97316" 
+                            strokeWidth="3"
+                            strokeLinejoin="round"
+                            vectorEffect="non-scaling-stroke"
+                            points={yearlyFinancials.map((d, i) => {
+                              const x = (i + 0.5) * (100 / yearlyFinancials.length);
+                              const y = 100 - ((d.margin - minMargin) / (maxMargin - minMargin)) * 100;
+                              return `${x},${y}`;
+                            }).join(' ')}
+                          />
+                        </svg>
+                        
+                        {/* Data Points for Margin Line */}
+                        <div className="absolute inset-0 pointer-events-none z-30">
+                          {yearlyFinancials.map((d, i) => {
+                            const x = (i + 0.5) * (100 / yearlyFinancials.length);
+                            const y = 100 - ((d.margin - minMargin) / (maxMargin - minMargin)) * 100;
+                            return (
+                              <div key={`margin-point-${i}`} className="absolute flex flex-col items-center justify-center" style={{ left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' }}>
+                                <div className="w-3 h-3 bg-white border-[2.5px] border-orange-500 rounded-full shadow-md relative z-10"></div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* X-Axis Labels */}
+                      <div className="absolute bottom-0 left-8 right-10 flex justify-around">
+                        {yearlyFinancials.map((data, idx) => (
+                          <div key={`label-${idx}`} className="flex flex-col items-center">
+                            <span className="text-sm font-bold text-slate-700">{data.year}</span>
+                            <span className="text-[10px] text-slate-400">{data.status}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom Section: Structural Shift (Full Width) */}
+                  <div className="w-full bg-slate-800 text-white rounded-xl p-6 shadow-lg flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bold flex items-center gap-2">
+                        <Layers className="w-5 h-5 text-blue-400" />
+                        營收結構黃金交叉
+                      </h3>
+                    </div>
+                    <p className="text-slate-300 mb-6 text-sm leading-relaxed max-w-3xl">
+                      傳統 IoT RAM 貢獻度將逐漸讓位給高毛利、高成長的先進封裝矽電容 (S-SiCap)。這有效抵禦了單一消費性電子景氣波動風險。
+                    </p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-4">
+                      {/* 2024 Base */}
+                      <div className="bg-slate-700/40 p-5 rounded-xl border border-slate-600/50">
+                        <div className="flex justify-between text-xs font-bold mb-3 text-slate-300">
+                          <span>2024 / 2025初 (轉型期)</span>
+                        </div>
+                        <div className="w-full bg-slate-700 rounded-full h-8 flex overflow-hidden shadow-inner">
+                          <div className="bg-emerald-500 h-full flex items-center justify-center text-xs font-bold transition-all duration-1000" style={{ width: '80%' }}>IoT RAM 80%</div>
+                          <div className="bg-blue-500 h-full flex items-center justify-center text-xs font-bold transition-all duration-1000" style={{ width: '15%' }}>SiCap 15%</div>
+                          <div className="bg-indigo-400 h-full flex items-center justify-center text-xs font-bold transition-all duration-1000" style={{ width: '5%' }}></div>
+                        </div>
+                      </div>
+
+                      {/* 2026 Target */}
+                      <div className="bg-slate-700/40 p-5 rounded-xl border border-blue-500/30">
+                        <div className="flex justify-between text-xs font-bold mb-3 text-blue-300">
+                          <span>2026(E) 目標結構 (爆發期)</span>
+                        </div>
+                        <div className="w-full bg-slate-700 rounded-full h-8 flex overflow-hidden shadow-inner">
+                          <div className="bg-emerald-500 h-full flex items-center justify-center px-2 text-xs font-bold transition-all duration-1000" style={{ width: '50%' }}>IoT 50%</div>
+                          <div className="bg-blue-500 h-full flex items-center justify-center text-xs font-bold transition-all duration-1000 relative group" style={{ width: '40%' }}>
+                            SiCap &gt; 35%
+                            <div className="absolute -top-10 bg-white text-blue-900 text-[10px] px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap shadow-lg">IPD量產帶動躍升</div>
+                          </div>
+                          <div className="bg-indigo-400 h-full flex items-center justify-center text-xs font-bold transition-all duration-1000" style={{ width: '10%' }}>VHM 10%</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-slate-700">
+                      <div className="flex justify-between md:justify-start gap-8 text-xs text-slate-400 mb-5">
+                        <span className="flex items-center gap-1.5"><div className="w-3 h-3 bg-emerald-500 rounded-full"></div> IoT RAM</span>
+                        <span className="flex items-center gap-1.5"><div className="w-3 h-3 bg-blue-500 rounded-full"></div> S-SiCap (含IPC/IPD)</span>
+                        <span className="flex items-center gap-1.5"><div className="w-3 h-3 bg-indigo-400 rounded-full"></div> VHM NRE</span>
+                      </div>
+                      
+                      {/* 關鍵動能名詞解析小辭典 */}
+                      <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-600">
+                        <p className="text-sm text-slate-300 font-bold mb-3 flex items-center gap-1.5">
+                          <Microscope className="w-4 h-4 text-blue-400"/> 產品線代號速查字典：
+                        </p>
+                        <ul className="text-xs md:text-sm text-slate-400 space-y-2.5">
+                          <li className="flex items-start gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0"></div>
+                            <div><span className="text-blue-300 font-bold">IPC (中介層電容)</span>：內建於 CoWoS 矽中介層。2024下半年起量產，是愛普<strong className="text-slate-300">現階段的矽電容營收主力</strong>。</div>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0"></div>
+                            <div><span className="text-blue-300 font-bold">IPD (分離式電容)</span>：獨立電容晶粒，鎖定基板與 Intel EMIB 封裝。預計 <strong className="text-slate-300">2026下半年量產，成為後續成長動能</strong>。</div>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0"></div>
+                            <div><span className="text-emerald-400 font-bold">ApSRAM</span>：新一代低功耗邊緣 AI 記憶體，2026 Q1 已量產，推動 IoT RAM 升級。</div>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* NEW SECTION: Quarterly Momentum Tracker (DATA-DRIVEN) */}
+                <div className="mt-8 border-t border-slate-200 pt-8">
+                  <h3 className="text-xl font-extrabold text-slate-800 mb-2 flex items-center gap-2">
+                    <TrendingUp className="w-6 h-6 text-emerald-600" />
+                    2026 短期營運爆發動能追蹤
+                  </h3>
+                  <p className="text-slate-500 text-sm mb-6">年度柱狀圖無法體現的「季增長」與「毛利率質變」，正反映 S-SiCap 放量的強勁力道。</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {quarterlyMomentum.map((q) => (
+                      <div key={q.id} className={`${q.styles.wrapper} rounded-xl p-5 relative`}>
+                        {q.topLabel && (
+                          <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm">
+                            {q.topLabel}
+                          </div>
+                        )}
+                        <div className={`flex justify-between items-center mb-3 ${q.topLabel ? 'mt-2' : ''}`}>
+                          <span className={`${q.styles.badgeBg} text-xs font-bold px-2 py-1 rounded`}>{q.badge}</span>
+                        </div>
+                        <div className="flex items-end gap-2 mb-2">
+                          <span className={`text-2xl md:text-3xl font-extrabold ${q.styles.yoyText}`}>YoY {q.yoy}</span>
+                          <span className={`text-sm font-bold mb-1 ${q.styles.qoqText}`}>QoQ {q.qoq}</span>
+                        </div>
+                        <div className={`w-full h-1.5 rounded-full mb-3 ${q.styles.barBg}`}>
+                          <div className={`${q.styles.barFill} h-1.5 rounded-full`} style={{width: q.progressWidth}}></div>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-500">{q.marginLabel}</span>
+                          <span className={`font-bold ${q.styles.marginText}`}>{q.marginValue}</span>
+                        </div>
+                        <p className="text-xs text-slate-600 mt-3 pt-3 border-t border-slate-100/50 font-medium">
+                          {q.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab: Overview (Tech & Timeline) */}
+            {activeTab === 'overview' && (
+              <div className="space-y-10 animate-in fade-in duration-500">
+                
+                <div className="border-b border-slate-200 pb-4">
+                  <h2 className="text-2xl font-extrabold text-slate-800">工程技術深度解析</h2>
+                  <p className="text-slate-600 mt-2 max-w-4xl leading-relaxed">
+                    在 AI 晶片的世界裡，算力早已不是唯一瓶頸。當前的挑戰在於：<strong className="text-rose-600">瞬間高功耗下的電源完整性 (Power Integrity)</strong> 與 <strong className="text-indigo-600">資料搬移導致的能耗瓶頸 (Memory Wall)</strong>。愛普科技的技術正是為了解決這兩大硬體架構痛點。
+                  </p>
+                </div>
+
+                {/* Tech Deep Dive 1: S-SiCap */}
+                <div className="bg-slate-50 rounded-2xl p-1 border border-slate-200 shadow-sm relative">
+
+                  <div className="bg-white rounded-xl p-6 md:p-8">
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center shadow-inner">
+                        <Zap className="w-8 h-8" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold text-slate-800">S-SiCap 矽電容</h3>
+                        <p className="text-blue-600 font-bold mt-1">改善 AI 晶片高功耗與低電壓下的「電源完整性」</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col lg:flex-row gap-8">
+                      {/* Left Column: Text & IPD/IPC boxes */}
+                      <div className="flex-1 flex flex-col">
+                        <div>
+                          <h4 className="text-md font-bold text-slate-700 flex items-center gap-2 mb-3">
+                            <AlertTriangle className="w-4 h-4 text-rose-500" /> 傳統架構痛點
+                          </h4>
+                          <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                            當 AI 晶片 (GPU/ASIC) 功耗突破 2000W、核心電壓降至約 0.6V 時，巨大的瞬時電流變化 (dI/dt) 對電源完整性 (Power Integrity) 帶來極大挑戰。傳統 MLCC 電容若距離晶片太遠，較高的寄生電感 (ESL) 無法即時補足瞬時供電，將增加電壓驟降 (Vdroop) 風險。
+                          </p>
+                        </div>
+                        
+                        <div className="mt-2">
+                          <h4 className="text-md font-bold text-slate-700 flex items-center gap-2 mb-3">
+                            <CheckCircle className="w-4 h-4 text-emerald-500" /> 愛普的解答：S-SiCap 的兩種型態
+                          </h4>
+                          <div className="space-y-4">
+                            <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100 shadow-sm">
+                              <span className="font-bold text-emerald-700 text-sm flex items-center gap-1"><Layers className="w-4 h-4"/> 1. IPC (中介層內建電容):</span>
+                              <p className="text-xs text-slate-600 mt-2">直接在台積電 CoWoS-S 的「矽中介層 (Interposer)」上挖溝槽做電容。緊貼邏輯晶片，2024下半年起量產，是現階段的矽電容營收主力。</p>
+                            </div>
+                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm">
+                              <span className="font-bold text-blue-700 text-sm flex items-center gap-1"><Cpu className="w-4 h-4"/> 2. IPD (分離式嵌入電容):</span>
+                              <p className="text-xs text-slate-600 mt-2">做成獨立的電容晶粒，鎖定 EMIB 與有機中介層等新一代封裝。預計 2026 年下半年量產，成為後續成長動能。</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-auto pt-6">
+                          <div className="bg-amber-50 p-3.5 rounded-lg border border-amber-200 flex items-start gap-2 shadow-sm">
+                             <Target className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+                             <p className="text-xs text-amber-900 leading-relaxed">
+                               <strong>雙路徑佈局：</strong>愛普同時卡位矽中介層 (IPC) 與嵌入基板 (IPD) 兩條路線，能隨 CoWoS / EMIB 等封裝架構演進靈活調整產品，有效分散單一技術路線的風險。
+                             </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Column: Visual Diagram S-SiCap */}
+                      <div className="w-full lg:w-[45%] shrink-0 bg-slate-100 rounded-xl p-4 md:p-5 border border-slate-200 flex flex-col justify-center h-full overflow-hidden">
+                        <p className="text-xs font-bold text-slate-500 text-center mb-4 uppercase tracking-wider">實體封裝與供電路徑對比示意</p>
+                        
+                        <div className="w-full overflow-x-auto pb-2 scrollbar-hide">
+                          <div className="flex flex-col gap-4 w-full min-w-[300px]">
+                            {/* 傳統 MLCC */}
+                            <div className="w-full text-center">
+                              <div className="text-xs font-bold text-rose-600 mb-2">傳統 MLCC (打件於基板底部)</div>
+                              <div className="flex items-center justify-between bg-white p-3 md:p-4 rounded-xl border-2 border-dashed border-rose-300 gap-2 md:gap-3">
+                                 <div className="flex flex-col items-center flex-1">
+                                    <div className="bg-slate-800 text-white text-[10px] md:text-[11px] py-1.5 px-4 rounded shadow-sm relative w-[80%] z-10">
+                                      GPU Die
+                                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                                        <div className="w-1 h-2 bg-slate-400"></div><div className="w-1 h-2 bg-slate-400"></div><div className="w-1 h-2 bg-slate-400"></div>
+                                      </div>
+                                    </div>
+                                    <div className="bg-slate-300 text-slate-700 text-[10px] md:text-[11px] pt-3 pb-2 px-4 rounded w-[90%] mt-2 relative border border-slate-400">
+                                        Substrate
+                                        <div className="absolute w-1 h-full bg-rose-400 left-1/2 -translate-x-1/2 top-0 z-0"></div>
+                                    </div>
+                                    <div className="flex gap-2 -mt-1 z-10 relative">
+                                        <div className="bg-amber-500 text-white text-[8px] md:text-[9px] py-1 px-2 rounded shadow-md border border-amber-600">MLCC</div>
+                                        <div className="bg-amber-500 text-white text-[8px] md:text-[9px] py-1 px-2 rounded shadow-md border border-amber-600">MLCC</div>
+                                    </div>
+                                 </div>
+                                 <div className="w-[45%] shrink-0">
+                                    <div className="text-[9px] md:text-[10px] text-rose-600 font-bold bg-rose-50 px-2 py-2 rounded border border-rose-200 shadow-sm text-left w-full leading-relaxed">
+                                       長距離供電<br/>➔ 產生高 ESL
+                                    </div>
+                                 </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-center relative py-1">
+                              <div className="absolute w-full h-[1px] bg-slate-200"></div>
+                              <div className="bg-slate-100 px-2 relative z-10">
+                                <ArrowDown className="w-4 h-4 md:w-5 md:h-5 text-slate-400" />
+                              </div>
+                            </div>
+                            
+                            {/* 愛普 IPC */}
+                            <div className="w-full text-center">
+                              <div className="text-xs font-bold text-emerald-600 mb-2">愛普 IPC (內嵌於中介層)</div>
+                              <div className="flex items-center justify-between bg-white p-3 md:p-4 rounded-xl border-2 border-emerald-300 shadow-md gap-2 md:gap-3">
+                                 <div className="flex flex-col items-center flex-1">
+                                    <div className="bg-slate-800 text-white text-[10px] md:text-[11px] py-1.5 px-4 rounded shadow-sm relative w-[80%] z-20">
+                                      GPU Die
+                                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                                        <div className="w-1 h-2 bg-slate-400"></div><div className="w-1 h-2 bg-slate-400"></div><div className="w-1 h-2 bg-slate-400"></div>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="bg-blue-50 text-blue-800 text-[9px] md:text-[10px] py-2 px-2 rounded w-[95%] mt-2 border-2 border-blue-300 relative flex flex-col items-center z-10">
+                                        <span className="text-[7px] md:text-[8px] text-blue-600 font-bold mb-1 absolute top-0.5 left-1">Interposer</span>
+                                        <div className="bg-blue-500 text-white text-[8px] md:text-[9px] py-1 px-3 rounded shadow-inner mt-2 z-10 font-bold border border-blue-600">IPC 矽電容</div>
+                                        <div className="absolute w-1 h-4 bg-emerald-400 left-1/2 -translate-x-1/2 top-0 z-0"></div>
+                                        
+                                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
+                                          <div className="w-1.5 h-2 bg-slate-400"></div><div className="w-1.5 h-2 bg-slate-400"></div><div className="w-1.5 h-2 bg-slate-400"></div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-slate-300 text-slate-700 text-[10px] md:text-[11px] py-1.5 px-4 rounded w-[90%] mt-2 border border-slate-400">
+                                        Substrate
+                                    </div>
+                                 </div>
+                                 <div className="w-[45%] shrink-0">
+                                    <div className="text-[9px] md:text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-2 rounded border border-emerald-200 shadow-sm text-left w-full leading-relaxed">
+                                       極短距離供電<br/>➔ 降低 Vdroop 風險
+                                    </div>
+                                 </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Detailed Cross-section for IPC vs IPD */}
+                    <div className="bg-slate-100 rounded-xl p-6 border border-slate-200 mt-8">
+                      <p className="text-xs font-bold text-slate-500 text-center mb-6 uppercase tracking-wider">封裝層次解析：IPC 與 IPD 位置對比 (Cross-Section)</p>
+                      
+                      <div className="flex flex-col lg:flex-row gap-8">
+                        {/* IPC Detail Diagram */}
+                        <div className="bg-white p-5 rounded-xl border-2 border-blue-200 shadow-sm flex flex-col items-center relative overflow-hidden flex-1">
+                           <div className="absolute top-0 right-0 bg-blue-100 text-blue-700 font-bold text-[10px] px-3 py-1 rounded-bl-lg">2024量產主力</div>
+                           <h5 className="font-bold text-blue-800 mb-6 flex items-center gap-2"><Layers className="w-5 h-5"/> IPC (中介層電容)</h5>
+                           
+                           {/* Logic Die */}
+                           <div className="w-3/4 bg-slate-800 text-white text-[10px] py-2 text-center rounded-md shadow z-10 relative border border-slate-600">Logic GPU / ASIC Die</div>
+                           {/* Microbumps */}
+                           <div className="flex gap-3 py-1"><div className="w-1.5 h-2.5 bg-slate-400 rounded-sm"></div><div className="w-1.5 h-2.5 bg-slate-400 rounded-sm"></div><div className="w-1.5 h-2.5 bg-slate-400 rounded-sm"></div></div>
+                           
+                           {/* Interposer with embedded SiCap */}
+                           <div className="w-11/12 bg-blue-50 border-2 border-blue-300 p-4 rounded-lg flex flex-col items-center relative shadow-inner">
+                              <span className="text-[9px] md:text-[10px] text-blue-700 font-bold absolute top-1.5 left-2">Silicon Interposer</span>
+                              <div className="flex gap-2 md:gap-6 mt-4 mb-2">
+                                 <div className="bg-blue-600 text-white text-[9px] md:text-[10px] py-1.5 px-2 md:px-3 rounded shadow-md font-bold border border-blue-400 shrink-0">S-SiCap</div>
+                                 <div className="bg-blue-600 text-white text-[9px] md:text-[10px] py-1.5 px-2 md:px-3 rounded shadow-md font-bold border border-blue-400 shrink-0">S-SiCap</div>
+                              </div>
+                           </div>
+                           
+                           {/* C4 Bumps */}
+                           <div className="flex gap-5 py-1.5"><div className="w-2.5 h-3 bg-slate-400 rounded-sm"></div><div className="w-2.5 h-3 bg-slate-400 rounded-sm"></div><div className="w-2.5 h-3 bg-slate-400 rounded-sm"></div></div>
+                           
+                           {/* Substrate */}
+                           <div className="w-full bg-slate-200 border border-slate-300 text-slate-700 text-[11px] py-3 text-center rounded-md font-extrabold">Package Substrate (封裝載板)</div>
+                           
+                           <p className="text-xs text-slate-500 mt-auto pt-6 text-center px-4 leading-relaxed">
+                             直接利用半導體製程將電容整合進中介層，應用於 <strong className="text-slate-700">台積電 CoWoS-S</strong> 等架構。
+                           </p>
+                        </div>
+
+                        {/* IPD Detail Diagram */}
+                        <div className="bg-white p-5 rounded-xl border-2 border-indigo-200 shadow-sm flex flex-col items-center relative overflow-hidden flex-1">
+                           <div className="absolute top-0 right-0 bg-indigo-100 text-indigo-700 font-bold text-[10px] px-3 py-1 rounded-bl-lg">2026下半年爆發</div>
+                           <h5 className="font-bold text-indigo-800 mb-6 flex items-center gap-2"><Cpu className="w-5 h-5"/> IPD (分離式嵌入電容)</h5>
+                           
+                           {/* Logic Die */}
+                           <div className="w-3/4 bg-slate-800 text-white text-[10px] py-2 text-center rounded-md shadow z-10 relative border border-slate-600">Logic GPU / ASIC Die</div>
+                           {/* Microbumps */}
+                           <div className="flex gap-3 py-1"><div className="w-1.5 h-2.5 bg-slate-400 rounded-sm"></div><div className="w-1.5 h-2.5 bg-slate-400 rounded-sm"></div><div className="w-1.5 h-2.5 bg-slate-400 rounded-sm"></div></div>
+                           
+                           {/* Bridge / Organic RDL */}
+                           <div className="w-11/12 bg-slate-100 border border-slate-300 py-3 text-center rounded-md text-[10px] text-slate-500 font-bold mb-2">
+                              Organic RDL / Bridge (局部互連)
+                           </div>
+                           
+                           {/* Substrate with Embedded IPD */}
+                           <div className="w-full bg-indigo-50 border-2 border-indigo-300 pt-6 pb-5 px-3 rounded-lg flex flex-col items-center relative mt-2 shadow-inner">
+                              <span className="text-[10px] text-indigo-700 font-bold absolute top-1.5 left-2.5">Substrate (基板)</span>
+                              <div className="flex gap-2 md:gap-8 relative w-[90%] md:w-3/4 justify-center mt-2">
+                                 {/* Core Layer visual line */}
+                                 <div className="absolute w-full h-[2px] bg-indigo-200 top-1/2 -translate-y-1/2 z-0"></div>
+                                 <span className="absolute -top-4 text-[7px] md:text-[8px] text-indigo-400 bg-indigo-50 px-1 whitespace-nowrap">內核層 / 表面打件</span>
+                                 <div className="bg-indigo-600 text-white text-[9px] md:text-[10px] py-1.5 px-2 md:px-3 rounded shadow-md font-bold z-10 border border-indigo-400 shrink-0">IPD Die</div>
+                                 <div className="bg-indigo-600 text-white text-[9px] md:text-[10px] py-1.5 px-2 md:px-3 rounded shadow-md font-bold z-10 border border-indigo-400 shrink-0">IPD Die</div>
+                              </div>
+                           </div>
+                           
+                           <p className="text-xs text-slate-500 mt-auto pt-6 text-center px-4 leading-relaxed">
+                             將矽電容製作成獨立晶粒，嵌進基板或置於晶片背面。應用於 <strong className="text-slate-700">EMIB 或 CoWoS-L</strong> 封裝。
+                           </p>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* Tech Deep Dive 2: VHM */}
+                <div className="bg-slate-50 rounded-2xl p-1 border border-slate-200 shadow-sm">
+                  <div className="bg-white rounded-xl p-6 md:p-8">
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center shadow-inner">
+                        <Layers className="w-8 h-8" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold text-slate-800">VHM 垂直高頻寬記憶體</h3>
+                        <p className="text-indigo-600 font-bold mt-1">瞄準 LLM 推理，突破「記憶體帶寬與功耗瓶頸」</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col lg:flex-row gap-8">
+                      <div className="flex-1 flex flex-col">
+                         <h4 className="text-md font-bold text-slate-700 flex items-center gap-2 mb-3">
+                          <AlertTriangle className="w-4 h-4 text-rose-500" /> 傳統架構痛點
+                        </h4>
+                        <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                          在 LLM 推理時，系統效能常受限於「記憶體頻寬與資料搬運」。目前的 HBM 2.5D 架構下，記憶體與 GPU/ASIC 並排在中介層上，仍有一定物理距離，資料橫向移動的耗電量顯著。
+                        </p>
+                        <h4 className="text-md font-bold text-slate-700 flex items-center gap-2 mb-3 mt-6">
+                          <CheckCircle className="w-4 h-4 text-emerald-500" /> 愛普的解答：WoW 3D 垂直堆疊
+                        </h4>
+                        <p className="text-sm text-slate-600 leading-relaxed">
+                          VHM 採用 <b>Wafer-on-Wafer (WoW)</b> 技術。大幅減少對傳統微凸塊 (Microbumps) 通道的依賴，將客製化記憶體晶圓疊加在邏輯晶片上，透過高密度 TSV 或混合鍵合 (Hybrid Bonding) 垂直相連，顯著縮短邏輯與記憶體距離。目標是在相同或更小功耗下，提供遠高於傳統 2.5D 架構的有效頻寬，成為 HBM 之外的推理端替代方案。
+                        </p>
+                      </div>
+
+                      {/* Visual Diagram VHM */}
+                      <div className="w-full lg:w-[45%] shrink-0 bg-slate-100 rounded-xl p-4 md:p-6 border border-slate-200 flex flex-col justify-center overflow-hidden">
+                        <p className="text-xs font-bold text-slate-500 text-center mb-4 uppercase tracking-wider">封裝架構演進</p>
+                        
+                        <div className="w-full overflow-x-auto pb-2 scrollbar-hide">
+                          <div className="flex flex-col gap-6 min-w-[320px]">
+                            {/* 2.5D HBM */}
+                            <div className="w-full text-center">
+                              <div className="text-xs font-bold text-slate-600 mb-2">主流 2.5D HBM (橫向傳輸耗能顯著)</div>
+                              <div className="bg-white p-4 rounded-xl border border-slate-300 flex flex-col items-center relative">
+                                 {/* 上層：GPU 與 HBM 並排 */}
+                                 <div className="flex items-end justify-center gap-6 w-full relative z-10 pb-1">
+                                    {/* Logic GPU Column */}
+                                    <div className="flex flex-col items-center">
+                                       <div className="bg-slate-800 text-white text-[11px] py-2 px-4 rounded shadow-sm w-20 text-center">Logic GPU</div>
+                                       <div className="flex gap-1.5 mt-1 relative">
+                                         <span className="absolute right-full mr-2 top-0 text-[8px] text-rose-500 font-bold leading-none">Microbumps</span>
+                                         <div className="w-1 h-2.5 bg-rose-400 rounded-sm"></div>
+                                         <div className="w-1 h-2.5 bg-rose-400 rounded-sm"></div>
+                                         <div className="w-1 h-2.5 bg-rose-400 rounded-sm"></div>
+                                         <div className="w-1 h-2.5 bg-rose-400 rounded-sm"></div>
+                                       </div>
+                                    </div>
+                                    
+                                    {/* HBM Column */}
+                                    <div className="flex flex-col items-center">
+                                       <div className="bg-purple-600 text-white text-[11px] py-3 px-4 rounded shadow-sm w-16 text-center">HBM</div>
+                                       <div className="flex gap-1.5 mt-1">
+                                         <div className="w-1 h-2.5 bg-rose-400 rounded-sm"></div>
+                                         <div className="w-1 h-2.5 bg-rose-400 rounded-sm"></div>
+                                         <div className="w-1 h-2.5 bg-rose-400 rounded-sm"></div>
+                                         <div className="w-1 h-2.5 bg-rose-400 rounded-sm"></div>
+                                       </div>
+                                    </div>
+                                 </div>
+                                 
+                                 {/* 下層：Silicon Interposer */}
+                                 <div className="w-full bg-slate-200 pt-5 pb-2 rounded-lg border border-slate-300 relative shadow-inner flex flex-col items-center">
+                                    {/* Horizontal Routing */}
+                                    <div className="w-32 h-1 bg-rose-500 relative flex justify-center items-center mb-2">
+                                       <span className="absolute -top-3 text-[8px] text-rose-700 font-bold whitespace-nowrap bg-white/90 px-1.5 rounded shadow-sm border border-rose-100">中介層內部橫向佈線</span>
+                                    </div>
+                                    <div className="text-[10px] text-slate-500 font-bold">Silicon Interposer (矽中介層)</div>
+                                 </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-center relative py-1">
+                              <div className="absolute w-full h-[1px] bg-slate-200"></div>
+                              <div className="bg-slate-100 px-2 relative z-10">
+                                <ArrowDown className="w-5 h-5 text-slate-400" />
+                              </div>
+                            </div>
+
+                            {/* 3D VHM */}
+                            <div className="w-full text-center">
+                              <div className="text-xs font-bold text-indigo-600 mb-2">愛普 3D VHM (垂直相連縮短距離)</div>
+                              <div className="flex flex-col items-center bg-white p-4 rounded-xl border-2 border-indigo-300 shadow-md relative">
+                                 <div className="bg-indigo-600 text-white text-[11px] py-2 px-8 rounded shadow-sm z-10 w-32 text-center">VHM Memory</div>
+                                 
+                                 {/* TSV Lines */}
+                                 <div className="flex gap-2 py-1.5 relative z-0">
+                                    <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-1 rounded whitespace-nowrap border border-emerald-200 text-left leading-tight shadow-sm">TSV / Hybrid Bonding<br/>降低功耗</span>
+                                    <div className="w-1 h-4 bg-emerald-500"></div>
+                                    <div className="w-1 h-4 bg-emerald-500"></div>
+                                    <div className="w-1 h-4 bg-emerald-500"></div>
+                                    <div className="w-1 h-4 bg-emerald-500"></div>
+                                    <div className="w-1 h-4 bg-emerald-500"></div>
+                                    <div className="w-1 h-4 bg-emerald-500"></div>
+                                 </div>
+                                 
+                                 <div className="bg-slate-800 text-white text-[11px] py-2 px-8 rounded shadow-sm z-10 w-32 text-center">Logic SoC Die</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tech Deep Dive 3: ApSRAM & IoT RAM */}
+                <div className="bg-slate-50 rounded-2xl p-1 border border-slate-200 shadow-sm">
+                  <div className="bg-white rounded-xl p-6 md:p-8">
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center shadow-inner">
+                        <Database className="w-8 h-8" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold text-slate-800">ApSRAM / IoT RAM</h3>
+                        <p className="text-emerald-600 font-bold mt-1">邊緣運算與穿戴裝置的專屬「輕量級」工作記憶體</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col lg:flex-row gap-8">
+                      <div className="flex-1 flex flex-col">
+                         <h4 className="text-md font-bold text-slate-700 flex items-center gap-2 mb-3">
+                          <AlertTriangle className="w-4 h-4 text-rose-500" /> 標準 DRAM 的紅海痛點
+                        </h4>
+                        <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                          智慧手錶、輕量 AI 眼鏡等邊緣裝置空間極小、電池容量有限。若使用傳統標準型 DRAM，不僅耗電量太大，且容易受到大廠產能擠壓與價格劇烈波動的影響 (如近期傳統 DRAM 缺貨漲價)。
+                        </p>
+                        <h4 className="text-md font-bold text-slate-700 flex items-center gap-2 mb-3 mt-6">
+                          <CheckCircle className="w-4 h-4 text-emerald-500" /> 愛普的解答：客製化 ApSRAM
+                        </h4>
+                        <p className="text-sm text-slate-600 leading-relaxed">
+                          愛普的 IoT RAM 採用 Pseudo-SRAM (虛擬靜態隨機存取記憶體) 架構，容量媲美 DRAM，但介面更簡單、超級省電。<b>2026 Q1 最新量產的 ApSRAM</b> 更是將頻寬提升了數倍，專門為「邊緣 AI 推理」量身打造，成為公司最穩定的現金牛。
+                        </p>
+                      </div>
+
+                      {/* Visual Diagram ApSRAM */}
+                      <div className="w-full lg:w-[45%] shrink-0 bg-slate-100 rounded-xl p-6 border border-slate-200 flex flex-col justify-center items-center">
+                        <p className="text-xs font-bold text-slate-500 text-center mb-4 uppercase tracking-wider">應用場景與優勢</p>
+                        <div className="grid grid-cols-2 gap-4 w-full">
+                          <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 text-center">
+                            <div className="text-3xl mb-2">⌚</div>
+                            <div className="font-bold text-slate-700 text-sm">極低功耗</div>
+                            <div className="text-[10px] text-slate-500 mt-1">延長穿戴裝置電池壽命</div>
+                          </div>
+                          <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 text-center">
+                            <div className="text-3xl mb-2">🧠</div>
+                            <div className="font-bold text-slate-700 text-sm">高頻寬傳輸</div>
+                            <div className="text-[10px] text-slate-500 mt-1">滿足輕量邊緣 AI 運算</div>
+                          </div>
+                          <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 text-center">
+                            <div className="text-3xl mb-2">🛡️</div>
+                            <div className="font-bold text-slate-700 text-sm">客製化介面</div>
+                            <div className="text-[10px] text-slate-500 mt-1">與 MCU 微處理器完美整合</div>
+                          </div>
+                          <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 text-center">
+                            <div className="text-3xl mb-2">📈</div>
+                            <div className="font-bold text-slate-700 text-sm">穩定報價</div>
+                            <div className="text-[10px] text-slate-500 mt-1">避開標準 DRAM 價格戰</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tech Deep Dive 4: IVR */}
+                <div className="bg-slate-50 rounded-2xl p-1 border border-slate-200 shadow-sm">
+                  <div className="bg-white rounded-xl p-6 md:p-8">
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center shadow-inner">
+                        <BatteryCharging className="w-8 h-8" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold text-slate-800">IVR 整合電源架構 (Integrated Voltage Regulator)</h3>
+                        <p className="text-amber-600 font-bold mt-1">佈局下一世代 HPC 整合式電源供應方案</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col lg:flex-row gap-8">
+                      <div className="flex-1 flex flex-col">
+                         <h4 className="text-md font-bold text-slate-700 flex items-center gap-2 mb-3">
+                          <AlertTriangle className="w-4 h-4 text-rose-500" /> 傳統伺服器供電痛點
+                        </h4>
+                        <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                          傳統伺服器中，負責調降電壓的 <b>VRM (電壓調節模組)</b> 多位在距離晶片較遠的「主機板」上。當 AI 晶片邁向高功耗與低電壓 (約 0.6V) 時，若仍依賴主機板長距離傳輸大電流，將面臨顯著的損耗與電壓跌落挑戰，較難應付瞬態電流需求。
+                        </p>
+                        <h4 className="text-md font-bold text-slate-700 flex items-center gap-2 mb-3 mt-6">
+                          <CheckCircle className="w-4 h-4 text-emerald-500" /> 愛普的 S-SiCap 應用延伸
+                        </h4>
+                        <p className="text-sm text-slate-600 leading-relaxed">
+                          愛普正積極與合作夥伴佈局 <b>IVR (整合式電壓調節器)</b> 方案，試圖將 PMIC 與被動元件更緊密地整合在封裝內部或基板上。在這類高階電源模組架構中，愛普具備極小體積與極低 ESL 特性的 <b>S-SiCap 成為關鍵的去耦元件選項</b>，有機會在未來的高階電源模組市場中擴大營收貢獻。
+                        </p>
+                      </div>
+
+                      {/* Visual Diagram IVR */}
+                      <div className="w-full lg:w-[45%] shrink-0 bg-slate-100 rounded-xl p-4 md:p-6 border border-slate-200 flex flex-col justify-center overflow-hidden">
+                        <p className="text-xs font-bold text-slate-500 text-center mb-4 uppercase tracking-wider">電源架構選項演進</p>
+                        
+                        <div className="w-full overflow-x-auto pb-2 scrollbar-hide">
+                          <div className="flex flex-col gap-6 min-w-[340px]">
+                            {/* Traditional VRM */}
+                            <div className="w-full">
+                              <div className="text-xs font-bold text-slate-600 mb-1">傳統 VRM 架構 (主機板供電 ➔ 損耗明顯)</div>
+                              <div className="flex items-center justify-between bg-white p-2.5 md:p-3 rounded-xl border border-slate-300 relative gap-1.5 md:gap-2">
+                                 <div className="bg-rose-500 text-white text-[9px] md:text-[10px] py-2 md:py-3 px-2 md:px-3 rounded shadow-md z-10 shrink-0">主機板 VRM</div>
+                                 <div className="flex-1 h-1.5 bg-rose-200 relative flex items-center justify-end z-10 mr-1">
+                                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-[7px] md:text-[8px] text-rose-600 font-bold whitespace-nowrap bg-white/80 px-1 rounded shadow-sm border border-rose-100">長距離傳輸損耗</div>
+                                   <ArrowRight className="w-3 h-3 text-rose-400 absolute -right-1" />
+                                 </div>
+                                 <div className="flex bg-slate-100 border border-slate-300 p-1 md:p-1.5 rounded z-10 shrink-0">
+                                   <div className="bg-slate-700 text-white text-[9px] md:text-[10px] py-1 px-1.5 md:py-1.5 md:px-2 rounded-l">封裝基板</div>
+                                   <div className="bg-slate-800 text-white text-[9px] md:text-[10px] py-1 px-2 md:py-1.5 md:px-3 rounded-r font-bold border-l border-slate-600">GPU</div>
+                                 </div>
+                              </div>
+                            </div>
+                            
+                            {/* IVR */}
+                            <div className="w-full">
+                              <div className="text-xs font-bold text-amber-600 mb-1">IVR 整合電源架構 (貼近封裝 ➔ 提升效能)</div>
+                              <div className="flex items-center justify-between bg-amber-50 p-2.5 md:p-3 rounded-xl border-2 border-amber-300 shadow-md gap-1.5 md:gap-2">
+                                 <div className="bg-slate-400 text-white text-[9px] md:text-[10px] py-1.5 px-2 md:py-2 md:px-3 rounded shrink-0">高壓輸入</div>
+                                 <div className="w-4 h-1.5 bg-amber-300 relative flex items-center">
+                                   <ArrowRight className="w-3 h-3 text-amber-500 absolute -right-1" />
+                                 </div>
+                                 <div className="flex-1 flex justify-between items-center bg-white p-1 md:p-1.5 border-2 border-amber-400 rounded relative shrink-0 min-w-0">
+                                   <div className="absolute -top-2.5 left-2 bg-white text-[7px] md:text-[8px] text-amber-700 px-1 font-bold">晶片封裝內部/基板</div>
+                                   <div className="bg-amber-500 text-white text-[8px] md:text-[9px] py-1 px-1.5 md:px-2 rounded text-center shadow-inner border border-amber-600 shrink-0 mr-1.5 md:mr-2">
+                                      <span className="font-bold">IVR 模組</span><br/>
+                                      <span className="text-[6px] md:text-[7px] opacity-90">(PMIC+SiCap)</span>
+                                   </div>
+                                   <div className="w-2.5 md:w-3 h-1.5 bg-emerald-400 relative flex items-center mr-2">
+                                     <ArrowRight className="w-2.5 h-2.5 text-emerald-600 absolute -right-1" />
+                                   </div>
+                                   <div className="bg-slate-800 text-white text-[9px] md:text-[10px] py-1.5 px-2 md:py-2 md:px-3 rounded font-bold shadow-md shrink-0">GPU</div>
+                                 </div>
+                              </div>
+                              <div className="text-center mt-2 text-[9px] md:text-[10px] text-amber-700 font-bold bg-amber-100 py-1 rounded">愛普 S-SiCap 具備成為高階電源模組去耦元件之潛力</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Milestone Timeline */}
+                <div className="mt-10">
+                  <h3 className="text-lg font-bold flex items-center gap-2 mb-6 border-b border-slate-100 pb-2">
+                    <Calendar className="w-5 h-5 text-blue-500" />
+                    關鍵技術與商業進程 (Milestones)
+                  </h3>
+                  <div className="relative border-l-2 border-blue-200 ml-3 md:ml-6 space-y-8 pb-4">
+                    <div className="relative pl-6 md:pl-8">
+                      <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white shadow"></div>
+                      <p className="text-sm font-bold text-slate-500 mb-1">2024 Q3</p>
+                      <h4 className="text-md font-bold text-slate-800">IPC (Interposer) 率先量產</h4>
+                      <p className="text-sm text-slate-600 mt-1">打入台積電與日月光供應鏈，服務美系雲端大客戶 AI ASIC，奠定矽電容市場領導地位。</p>
+                    </div>
+                    <div className="relative pl-6 md:pl-8">
+                      <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow"></div>
+                      <p className="text-sm font-bold text-slate-500 mb-1">2026 Q1</p>
+                      <h4 className="text-md font-bold text-slate-800">ApSRAM 量產 & 財報創高</h4>
+                      <p className="text-sm text-slate-600 mt-1">新一代邊緣 AI 記憶體放量；單季營收達 21 億元，展現 AI 訂單實質轉換率。</p>
+                    </div>
+                    <div className="relative pl-6 md:pl-8">
+                      <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-indigo-500 border-2 border-white shadow animate-pulse"></div>
+                      <p className="text-sm font-bold text-blue-600 mb-1">2026 H2 (即將到來)</p>
+                      <h4 className="text-md font-bold text-slate-800">IPD 分離式矽電容小量放量</h4>
+                      <p className="text-sm text-slate-600 mt-1">預計導入 EMIB 及次世代封裝，跨入單價更高的基板級/LSC被動元件市場。</p>
+                    </div>
+                    <div className="relative pl-6 md:pl-8">
+                      <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-slate-300 border-2 border-white"></div>
+                      <p className="text-sm font-bold text-slate-500 mb-1">2027 - 2028</p>
+                      <h4 className="text-md font-bold text-slate-500">VHM 大規模量產預期</h4>
+                      <p className="text-sm text-slate-500 mt-1">預期將由 NRE 研發階段轉入實質晶圓量產，成為支撐公司長線成長的第三條曲線。</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab: Valuation & Scenarios (DATA-DRIVEN) */}
+            {activeTab === 'valuation' && (
+              <div className="space-y-10 animate-in fade-in duration-500">
+                
+                {/* Section 1: Bull / Base / Bear Scenarios */}
+                <div>
+                  <h3 className="text-xl font-bold flex items-center gap-2 mb-6 border-b border-slate-100 pb-2">
+                    <Activity className="w-6 h-6 text-blue-500" />
+                    法人籌碼與 EPS 預估落點 (最新更新: 2026/04)
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {valuationScenarios.map((scenario) => (
+                      <div key={scenario.type} className={`${scenario.styles.wrapper} rounded-xl p-6 shadow-sm`}>
+                        <div className={`absolute top-0 right-0 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg ${scenario.styles.badgeBg}`}>
+                          {scenario.badge}
+                        </div>
+                        <h4 className={`font-bold flex items-center gap-2 mb-2 mt-2 ${scenario.styles.titleText}`}>
+                          {scenario.type === 'Bull' && <TrendingUp className="w-5 h-5" />}
+                          {scenario.type === 'Base' && <Target className="w-5 h-5" />}
+                          {scenario.type === 'Bear' && <TrendingDown className="w-5 h-5" />}
+                          {scenario.title}
+                        </h4>
+                        <div className="text-xl font-extrabold text-slate-800 mb-4">{scenario.subtitle}</div>
+                        <ul className="text-sm text-slate-600 space-y-2">
+                          {scenario.bullets.map((bullet, idx) => (
+                            <li key={idx} className="flex items-start gap-1">
+                              {scenario.type === 'Bear' ? (
+                                <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${scenario.styles.iconColor}`} />
+                              ) : (
+                                <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${scenario.styles.iconColor}`} />
+                              )}
+                              <span dangerouslySetInnerHTML={{ __html: bullet.replace(/([：:])(.*?)(?=。|$)/, '$1<b>$2</b>') }}></span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Section 2: Competitive Moat */}
+                <div>
+                  <h3 className="text-xl font-bold flex items-center gap-2 mb-6 border-b border-slate-100 pb-2">
+                    <Shield className="w-6 h-6 text-indigo-500" />
+                    同業競爭格局與護城河 (Competitive Moat)
+                  </h3>
+                  <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                        <tr>
+                          <th className="p-4 font-bold w-1/4">技術領域</th>
+                          <th className="p-4 font-bold w-1/4">潛在競爭者</th>
+                          <th className="p-4 font-bold w-1/2">愛普科技的護城河 (Moat)</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        <tr className="hover:bg-slate-50 transition-colors">
+                          <td className="p-4 font-semibold text-blue-700">IPC 矽中介層電容</td>
+                          <td className="p-4 text-slate-600">台積電 (In-house)、美系新創</td>
+                          <td className="p-4 text-slate-700">
+                            <b>生態系綁定：</b>已成功整合進台積電 CoWoS-S 流程並量產。晶圓代工廠通常傾向引進成熟的第三方 IP 以分攤研發風險，愛普具備<span className="bg-blue-100 text-blue-800 px-1 rounded">先行者驗證優勢</span>。
+                          </td>
+                        </tr>
+                        <tr className="hover:bg-slate-50 transition-colors">
+                          <td className="p-4 font-semibold text-blue-700">IPD 分離式矽電容</td>
+                          <td className="p-4 text-slate-600">Murata (村田)、Empower</td>
+                          <td className="p-4 text-slate-700">
+                            <b>深溝槽密度極限：</b>傳統被動元件大廠的製程多非前段半導體製程。愛普的 Gen4 技術能達到 $3.8 \mu F/mm^2$ 的高電容密度，且具備多 Chiplet <span className="bg-blue-100 text-blue-800 px-1 rounded">Reticle-stitching (接合曝光)</span> 量產能力。
+                          </td>
+                        </tr>
+                        <tr className="hover:bg-slate-50 transition-colors">
+                          <td className="p-4 font-semibold text-indigo-700">VHM 垂直記憶體</td>
+                          <td className="p-4 text-slate-600">SK Hynix, Samsung (HBM陣營)</td>
+                          <td className="p-4 text-slate-700">
+                            <b>差異化賽道：</b>不與 HBM 拚「訓練(Training)」市場的絕對容量，而是鎖定「推理(Inference)」市場的<span className="bg-indigo-100 text-indigo-800 px-1 rounded">低功耗與超低延遲</span>。客製化 SoC 的 ASIC 業者更傾向採用 VHM 作為替代方案。
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Section 3: TAM & Attach Rate */}
+                <div>
+                  <h3 className="text-xl font-bold flex items-center gap-2 mb-6 border-b border-slate-100 pb-2">
+                    <PieChart className="w-6 h-6 text-emerald-500" />
+                    潛在市場 (TAM) 擴張與產能實證
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-slate-800 text-white rounded-xl p-6 shadow-md">
+                      <h4 className="text-emerald-400 font-bold mb-4 flex items-center gap-2">
+                        <Database className="w-5 h-5"/> 力積電 IPD 產能備援
+                      </h4>
+                      <p className="text-slate-300 text-sm mb-4 leading-relaxed">
+                        根據力積電 2026/04 法說會證實，應用於 EMIB 的先進封裝 IPD 產品已獲國際大廠認證並即將小量備貨。這為愛普的 IPD 提供了潛在的產能出海口。
+                      </p>
+                      
+                      <div className="bg-slate-700/60 border border-slate-600 rounded-xl p-5 mt-2">
+                        <p className="text-xs font-bold text-slate-400 text-center mb-4 uppercase tracking-wider">實際晶粒產出當量對比 (Die Output Ratio)</p>
+                        <div className="space-y-5">
+                          {/* 8 inch */}
+                          <div>
+                            <div className="flex justify-between items-end mb-1.5">
+                              <span className="text-sm font-bold text-slate-200">8 吋廠 (月投片 3,000 片)</span>
+                              <span className="text-xs text-emerald-400 font-bold bg-emerald-900/50 px-2 py-0.5 rounded">1x 基準當量</span>
+                            </div>
+                            <div className="w-full bg-slate-800 h-4 rounded-full overflow-hidden shadow-inner border border-slate-600">
+                              <div className="bg-emerald-500 h-full transition-all duration-1000" style={{ width: '40%' }}></div>
+                            </div>
+                          </div>
+                          {/* 12 inch */}
+                          <div>
+                            <div className="flex justify-between items-end mb-1.5">
+                              <span className="text-sm font-bold text-slate-200">12 吋廠 (月投片 3,000 片)</span>
+                              <span className="text-xs text-blue-400 font-bold bg-blue-900/50 px-2 py-0.5 rounded">2.25x 產能躍升</span>
+                            </div>
+                            <div className="w-full bg-slate-800 h-4 rounded-full overflow-hidden shadow-inner border border-slate-600">
+                              <div className="bg-blue-500 h-full transition-all duration-1000 flex items-center justify-end pr-3" style={{ width: '90%' }}>
+                                 <span className="text-[9px] text-white font-bold opacity-90">面積效益倍增</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-4 leading-relaxed text-center">
+                          * 12 吋晶圓面積約為 8 吋的 2.25 倍。在相同投片量下，12 吋產能若順利開出將帶來顯著的規模經濟。
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                      <h4 className="text-slate-800 font-bold mb-4 flex items-center gap-2">
+                        <Target className="w-5 h-5 text-blue-500"/> 客戶結構與潛在路徑
+                      </h4>
+                      <div className="space-y-4">
+                        <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                          <div className="bg-blue-500 text-white p-1.5 rounded mt-0.5"><CheckCircle className="w-4 h-4"/></div>
+                          <div>
+                            <div className="font-bold text-slate-800 text-sm">階段一：矽中介層導入 (已達成)</div>
+                            <div className="text-xs text-slate-600 mt-1">IPC 成功打入美系雲端大咖 ASIC 晶片，隨 CoWoS-S 放量。</div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                          <div className="bg-indigo-500 text-white p-1.5 rounded mt-0.5"><Zap className="w-4 h-4"/></div>
+                          <div>
+                            <div className="font-bold text-slate-800 text-sm">階段二：嵌入基板與次世代封裝</div>
+                            <div className="text-xs text-slate-600 mt-1">IPD 鎖定 EMIB / CoWoS-L 等架構，有機會分散單一客戶與單一技術路線風險。</div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg border border-amber-100">
+                          <div className="bg-amber-500 text-white p-1.5 rounded mt-0.5"><Layers className="w-4 h-4"/></div>
+                          <div>
+                            <div className="font-bold text-slate-800 text-sm">階段三：高階電源模組 (佈局中)</div>
+                            <div className="text-xs text-slate-600 mt-1">與合作夥伴佈局 IVR 領域，期盼在未來的系統級電源架構中擴大滲透率。</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab: Risks */}
+            {activeTab === 'risks' && (
+              <div className="space-y-6 animate-in fade-in duration-500">
+                <p className="text-slate-600 mb-6">高報酬往往伴隨挑戰，投資愛普科技需持續追蹤以下三大潛在風險指標：</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-white border border-amber-200 rounded-xl p-6 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-amber-100 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+                    <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2 relative z-10">
+                      <Target className="w-5 h-5 text-amber-500" />
+                      新產品驗證時程 (Time-to-Market)
+                    </h3>
+                    <p className="text-slate-600 text-sm leading-relaxed relative z-10">
+                      IPD 量產時程已較法人早期預估略微推遲，反映出先進封裝驗證的高門檻。若未來 VHM 驗證不順或客戶採用意願低，將大幅影響長線估值重評 (Re-rating)。
+                    </p>
+                  </div>
+
+                  <div className="bg-white border border-rose-200 rounded-xl p-6 relative overflow-hidden group">
+                     <div className="absolute top-0 right-0 w-16 h-16 bg-rose-100 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+                    <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2 relative z-10">
+                      <ZapOff className="w-5 h-5 text-rose-500" />
+                      測試產能與轉廠瓶頸
+                    </h3>
+                    <p className="text-slate-600 text-sm leading-relaxed relative z-10">
+                      2026 年初 IoT RAM 與 ApSRAM 需求受限於後段測試產能。此外，力積電銅鑼廠 (P5) 出售造成 IPC 部分後段製程交期延遲，雖公司評估影響有限，仍為短期執行風險。
+                    </p>
+                  </div>
+
+                  <div className="bg-white border border-slate-200 rounded-xl p-6 relative overflow-hidden group">
+                     <div className="absolute top-0 right-0 w-16 h-16 bg-slate-100 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+                    <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2 relative z-10">
+                      <Shield className="w-5 h-5 text-slate-500" />
+                      記憶體景氣反轉壓力
+                    </h3>
+                    <p className="text-slate-600 text-sm leading-relaxed relative z-10">
+                      目前受惠於傳統 DRAM 短缺與漲價的外溢效應。但若記憶體景氣反轉，加上代工成本(力積電)上升無法順利轉嫁，將直接侵蝕 IoT RAM 的毛利與出貨量。
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Conclusion / CTA */}
+        <div className="text-center mt-12 mb-8">
+           <p className="text-sm text-slate-400 mb-2">免責聲明：本報告數據基於法人預估與 2026 最新公開資訊，僅供學術研究，不構成投資建議。</p>
+        </div>
+      </main>
+    </div>
+  );
+}
